@@ -27,3 +27,12 @@ The program will prompt you to enter the number of voters and then proceed to co
 Once all votes are collected, the program will calculate the winner(s) of the election based on the Tideman algorithm and print the result.
 
 
+## Features
+
+- Supports an arbitrary number of candidates (up to a maximum defined in the code).
+- Collects ranked preferences from voters.
+- Calculates preferences based on voter inputs.
+- Determines pairs of candidates based on preference counts.
+- Sorts pairs in decreasing order of preference.
+- Locks in pairs to determine the winner(s) while avoiding cycles in the preference graph.
+
