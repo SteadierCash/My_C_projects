@@ -2,15 +2,7 @@ This repository contains various C projects that I've worked on.
 
 ## Project Descriptions:
 
-### 1. Tideman Algorithm
-   - **Description**: This project implements the Tideman algorithm.
-   - **Usage**:
-       ```bash
-       ./tideman [name1] [name2] ...
-       ```
-
-
-### 2. Data Encryption and Decryption
+### 1. Data Encryption and Decryption
    - **Description**: This project provides functionality to encrypt and decrypt data from a text file using a specified encryption algorithm.
 
    - **Usage**:
@@ -23,4 +15,21 @@ This repository contains various C projects that I've worked on.
       ```bash
       ./encrypt decrypt 
       ```
+
+### 2. image (*in progress*)
+   - **Description**: This project is a simple JPEG file parser implemented in C. It parses JPEG files to extract basic information such as image dimensions (width and height) and comments embedded within the file. 
+
+
+### 3. socket (*in progress*)
+   - **Description**: This project explores socket programming in the C programming language.
+
+### 4. Tideman Algorithm
+   - **Description**: This project implements the Tideman algorithm.
+   - **Usage**:
+       ```bash
+       ./tideman [name1] [name2] ...
+       ```
+
+
+
 
