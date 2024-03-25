@@ -1,12 +1,16 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <netinet/in.h>
 
 //constatns for markers 
 #define SOI_MARKER          0xFFD8      //start of image marker
 #define SOF_MARKER_START    0xFFC0      //start of frame - start mmarker
 #define SOF_MARKER_END      0xFFCF      //start of frame - end marker
-#define COM_MARKER          0xFFFE      //comment_marker
+#define APP0_MARKER         0xFFE0      //comment_marker
+#define APP1_MARKER         0xFFE1      //comment_marker
+
+
 
 //errors
 #define ERR_FILE_OPEN   -1
@@ -84,9 +88,9 @@ int main(int argc, char* argv[])
             printf("Width: %d, Height: %d\n", width, height);
         }
 
-        else if (marker == COM_MARKER)
+        else if (marker == APP1_MARKER)
         {
-            printf("Comment segment found\n");
+            // printf("Comment segment found\n");
 
             // Read the segment size
             uint16_t segment_size;
@@ -98,16 +102,53 @@ int main(int argc, char* argv[])
             }
             segment_size = ntohs(segment_size);
 
-            // Read and print the comment data
-            char comment[segment_size - 2]; // Subtract 2 for the size field
+            // Read APP1 segment data
+            // char *segment_data = (char *)malloc(segment_size);
+            // if (!segment_data)
+            // {
+            //     printf("Memory allocation error\n");
+            //     fclose(image);
+            //     return ERR_READ_ERROR;
+            // }
+            // segment_size -= 2;
+            // if (fread(segment_data, sizeof(char), segment_size, image) != segment_size)
+            // {
+            //     printf("Error reading segment data\n");
+            //     free(segment_data);
+            //     fclose(image);
+            //     return ERR_READ_ERROR;
+            // }
 
-            if (fread(comment, sizeof(char), segment_size - 2, image) != segment_size - 2)
+            // printf("segment data: %s, size: %d\n", segment_data, segment_size);
+
+            // free(segment_data);
+
+            uint8_t *segment_data = (uint8_t *)malloc(segment_size * sizeof(uint8_t));
+            if (!segment_data)
             {
-                printf("Error reading comment data\n");
+                printf("Memory allocation error\n");
                 fclose(image);
                 return ERR_READ_ERROR;
             }
-            printf("Comment: %s\n", comment);
+            segment_size -= 2;
+
+            if (fread(segment_data, sizeof(uint8_t), segment_size, image) != segment_size)
+            {
+                printf("Error reading segment data\n");
+                free(segment_data);
+                fclose(image);
+                return ERR_READ_ERROR;
+            }
+            printf("segment data: ");
+            
+
+            for (int i = 0; i < segment_size; i++)
+                if ((int)segment_data[i] != 0)
+                    printf("%c ", segment_data[i]);
+
+            printf("\n");
+
+            free(segment_data);
         }
 
         else
@@ -126,13 +167,12 @@ int main(int argc, char* argv[])
 
     if (feof(image))
     {
-        printf("End of the file");
+        printf("End of the file\n");
         fclose(image);
+        
         return ERR_NO_SOF;
     }
-    
-
     fclose(image);
-    
+
     return 0;
 }
