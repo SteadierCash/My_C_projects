@@ -119,8 +119,6 @@ int main(int argc, char* argv[])
             //     return ERR_READ_ERROR;
             // }
 
-            // printf("segment data: %s, size: %d\n", segment_data, segment_size);
-
             // free(segment_data);
 
             uint8_t *segment_data = (uint8_t *)malloc(segment_size * sizeof(uint8_t));
