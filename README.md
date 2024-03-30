@@ -16,11 +16,11 @@ This repository contains various C projects that I've worked on.
       ./encrypt decrypt 
       ```
 
-### 2. image (*in progress*)
+### 2. image (*project in progress*)
    - **Description**: This project is a simple JPEG file parser implemented in C. It parses JPEG files to extract basic information such as image dimensions (width and height) and comments embedded within the file. 
 
 
-### 3. socket (*in progress*)
+### 3. socket (*project in progress*)
    - **Description**: This project explores socket programming in the C programming language.
 
 ### 4. Tideman Algorithm
