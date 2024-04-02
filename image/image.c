@@ -10,8 +10,6 @@
 #define APP0_MARKER         0xFFE0      //comment_marker
 #define APP1_MARKER         0xFFE1      //comment_marker
 
-
-
 //errors
 #define ERR_FILE_OPEN   -1
 #define ERR_NOT_JPEG    -2
@@ -80,7 +78,7 @@ int main(int argc, char* argv[])
         //     read_data(image);
         // }
 
-        if (marker == 0xffda)
+        if (marker >= SOF_MARKER_START && marker <= SOF_MARKER_END)
         {
             read_data_u8(image);
         }
@@ -127,44 +125,45 @@ int main(int argc, char* argv[])
 int read_data_u16(FILE* image)
 {
     uint16_t segment_size;
-            if (fread(&segment_size, sizeof(uint16_t), 1, image) != 1)
-            {
-                printf("Error reading segment size\n");
-                fclose(image);
-                return ERR_READ_ERROR;
-            }
-            segment_size = ntohs(segment_size);
-            fseek(image, 1, SEEK_CUR);
+    if (fread(&segment_size, sizeof(uint16_t), 1, image) != 1)
+    {
+        printf("Error reading segment size\n");
+        fclose(image);
+        return ERR_READ_ERROR;
+    }
+    segment_size = ntohs(segment_size);
+    fseek(image, 1, SEEK_CUR);
 
-            segment_size -= 3; //minus 2 bites for size_segment
-            segment_size /= 2;
+    segment_size -= 3; //minus 2 bites for size_segment and 1 for size or something like that
+    segment_size /= 2; // because to uint16 type
 
-            uint16_t *segment_data = (uint16_t *)malloc(segment_size * sizeof(uint16_t));
-            if (!segment_data)
-            {
-                printf("Memory allocation error\n");
-                fclose(image);
-                return ERR_READ_ERROR;
-            }
-            
-            printf("segment size: %u\n", segment_size);
-            // fseek(image, 1, SEEK_CUR);
+    uint16_t *segment_data = (uint16_t *)malloc(segment_size * sizeof(uint16_t));
+    if (!segment_data)
+    {
+        printf("Memory allocation error\n");
+        fclose(image);
+        return ERR_READ_ERROR;
+    }
+    
+    printf("segment size: %u\n", segment_size);
+    // fseek(image, 1, SEEK_CUR);
 
-            if (fread(segment_data, sizeof(uint16_t), segment_size, image) != segment_size)
-            {
-                printf("Error reading segment data\n");
-                free(segment_data);
-                fclose(image);
-                return ERR_READ_ERROR;
-            }
-            printf("segment data: ");
+    if (fread(segment_data, sizeof(uint16_t), segment_size, image) != segment_size)
+    {
+        printf("Error reading segment data\n");
+        free(segment_data);
+        fclose(image);
+        return ERR_READ_ERROR;
+    }
+    printf("segment data: ");
 
-            for (int i = 0; i < segment_size; i++)
-                    printf("%d ", ntohs(segment_data[i]));
-            printf("\n");
+    for (int i = 0; i < segment_size; i++)
+            printf("%d ", ntohs(segment_data[i]));
+    printf("\n");
 
-            free(segment_data);
+    free(segment_data);
 }
+
 
 int read_data_u8(FILE* image)
 {
