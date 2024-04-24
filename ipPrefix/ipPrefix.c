@@ -13,7 +13,7 @@ typedef struct Node
 
 int add(unsigned int base, char* mask);
 int del(unsigned int base, char* mask);
-int check(unsigned int ip);
+char* check(unsigned int ip);
 
 // Global root variable
 Node* root = NULL;
@@ -21,6 +21,13 @@ Node* root = NULL;
 int main() {
     //Create root node with children
     root = (Node*)malloc(sizeof(Node));
+
+    // Check if Trie is initialized
+    if (root == NULL) {
+        printf("Trie not initialized. Please initialize root node.\n");
+        return -1;
+    }
+
     root->isPrefix = false;
     for (int i = 0; i < CHILDREN; i++) {
         root->children[i] = NULL;
@@ -28,35 +35,35 @@ int main() {
 
     // Test adding and checking
     printf("----- 8 -----\n");
-    add(0x0A0A0A0A, "8");
-    printf("Mask for IP 10.10.10.1: %d\n", check(0x0A0A0A01));
-    printf("Mask for IP 11.11.11.255: %d\n", check(0x0B0B0BFF));
+    add(0x0A0A0A0A, "/8");
+    printf("Mask for IP 10.10.10.1: %s\n", check(0x0A0A0A01));
+    printf("Mask for IP 11.11.11.255: %s\n", check(0x0B0B0BFF));
 
     printf("----- 16 -----\n");
-    add(0x0A0A0A00, "16");
-    printf("Mask for IP 10.10.1.1: %d\n", check(0x0A0A0101));
-    printf("Mask for IP 10.11.2.255: %d\n", check(0x0A0B02FF));
+    add(0x0A0A0A00, "/16");
+    printf("Mask for IP 10.10.1.1: %s\n", check(0x0A0A0101));
+    printf("Mask for IP 10.11.2.255: %s\n", check(0x0A0B02FF));
 
     printf("----- 24 -----\n");
-    add(0x0A0A0A00, "24");
-    printf("Mask for IP 10.10.10.1: %d\n", check(0x0A0A0A01));
-    printf("Mask for IP 10.10.2.255: %d\n", check(0x0A0A02FF));
+    add(0x0A0A0A00, "/24");
+    printf("Mask for IP 10.10.10.1: %s\n", check(0x0A0A0A01));
+    printf("Mask for IP 10.10.2.255: %s\n", check(0x0A0A02FF));
 
     printf("----- 32 -----\n");
-    add(0x0A0A0A00, "32");
-    printf("Mask for IP 10.10.10.0: %d\n", check(0x0A0A0A00));
-    printf("Mask for IP 10.10.2.255: %d\n", check(0x0A0A02FF));
+    add(0x0A0A0A00, "/32");
+    printf("Mask for IP 10.10.10.0: %s\n", check(0x0A0A0A00));
+    printf("Mask for IP 10.10.2.255: %s\n", check(0x0A0A02FF));
 
     printf("----- -1 -----\n");
-    printf("Mask for IP 0.10.2.255: %d\n", check(0x000A02FF));
-    printf("Mask for IP 255.10.2.255: %d\n", check(0xFF0A02FF));
+    printf("Mask for IP 0.10.2.255: %s\n", check(0x000A02FF));
+    printf("Mask for IP 255.10.2.255: %s\n", check(0xFF0A02FF));
 
     printf("----- Delete -----\n");
-    printf("Mask for IP 10.10.10.1 before delete: %d\n", check(0x0A0A0A01));
-    del(0x0A0A0A00, "24");
-    printf("Mask for IP 10.10.10.1 after 1 delete: %d\n", check(0x0A0A0A01));
-    del(0x0A0A0A00, "16");
-    printf("Mask for IP 10.10.10.1 after 2 delete: %d\n", check(0x0A0A0A01));
+    printf("Mask for IP 10.10.10.1 before delete: %s\n", check(0x0A0A0A01));
+    del(0x0A0A0A00, "/24");
+    printf("Mask for IP 10.10.10.1 after 1 delete: %s\n", check(0x0A0A0A01));
+    del(0x0A0A0A00, "/16");
+    printf("Mask for IP 10.10.10.1 after 2 delete: %s\n", check(0x0A0A0A01));
 
 
     return 0;
@@ -64,15 +71,18 @@ int main() {
 
 
 int add(unsigned int base, char* mask){
+    // Ignore / character
+    int mask_value = atoi(mask + 1);
+
     //validate mask value
-    if (atoi(mask) > 32 || atoi(mask) < 0){
+    if (mask_value > 32 || mask_value < 0){
         printf("Invalid mask value\n");
         return -1;
     }
     
     //create nodes connected to base value 
     Node* current = root;
-    int mask_value = atoi(mask);
+
     for (int i = 31; i >= 32 - mask_value; i--) {
         // printf("mask_value: %d\n", i);
         int bit = (base >> i) & 1;
@@ -93,11 +103,14 @@ int add(unsigned int base, char* mask){
 }
 
 int del(unsigned int base, char* mask){
+    // Ignore / character
+    int mask_value = atoi(mask + 1);
+
     Node* current = root;
     Node* parent = NULL;
     int last_bit;
 
-    for (int i = 31; i >= 32 - atoi(mask); i--) {
+    for (int i = 31; i >= 32 - mask_value; i--) {
         int bit = (base >> i) & 1;
 
         // Move to the next level in the trie
@@ -126,12 +139,8 @@ int del(unsigned int base, char* mask){
 }
 
 
-int check(unsigned int ip){
-    // Check if Trie is initialized
-    if (root == NULL) {
-        printf("Trie not initialized. Please initialize root node.\n");
-        return -1;
-    }
+char* check(unsigned int ip){
+    
 
     // Initialize variables to track the length of the longest prefix match
     int longestMatch = -1;
@@ -153,5 +162,13 @@ int check(unsigned int ip){
         }
     }
 
-    return longestMatch;
+    char* str = (char*)malloc(5 * sizeof(char));
+    if (longestMatch != -1){
+        sprintf(str, "/%d", longestMatch);
+    }
+    else{
+        sprintf(str, "%d", longestMatch);
+    }
+
+    return str;
 }
