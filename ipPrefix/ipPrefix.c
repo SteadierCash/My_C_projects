@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+
 #define CHILDREN 2
+
 
 typedef struct Node
 {
@@ -11,9 +13,14 @@ typedef struct Node
     struct Node* children[CHILDREN];
 } Node;
 
+
+//Functions Prototypes
 int add(unsigned int base, char* mask);
 int del(unsigned int base, char* mask);
 char* check(unsigned int ip);
+void conduct_tests();
+unsigned int convert_ip(char* s);
+
 
 // Global root variable
 Node* root = NULL;
@@ -33,45 +40,14 @@ int main() {
         root->children[i] = NULL;
     }
 
-    // Test adding and checking
-    printf("----- 8 -----\n");
-    add(0x0A0A0A0A, "/8");
-    printf("Mask for IP 10.10.10.1: %s\n", check(0x0A0A0A01));
-    printf("Mask for IP 11.11.11.255: %s\n", check(0x0B0B0BFF));
-
-    printf("----- 16 -----\n");
-    add(0x0A0A0A00, "/16");
-    printf("Mask for IP 10.10.1.1: %s\n", check(0x0A0A0101));
-    printf("Mask for IP 10.11.2.255: %s\n", check(0x0A0B02FF));
-
-    printf("----- 24 -----\n");
-    add(0x0A0A0A00, "/24");
-    printf("Mask for IP 10.10.10.1: %s\n", check(0x0A0A0A01));
-    printf("Mask for IP 10.10.2.255: %s\n", check(0x0A0A02FF));
-
-    printf("----- 32 -----\n");
-    add(0x0A0A0A00, "/32");
-    printf("Mask for IP 10.10.10.0: %s\n", check(0x0A0A0A00));
-    printf("Mask for IP 10.10.2.255: %s\n", check(0x0A0A02FF));
-
-    printf("----- -1 -----\n");
-    printf("Mask for IP 0.10.2.255: %s\n", check(0x000A02FF));
-    printf("Mask for IP 255.10.2.255: %s\n", check(0xFF0A02FF));
-
-    printf("----- Delete -----\n");
-    printf("Mask for IP 10.10.10.1 before delete: %s\n", check(0x0A0A0A01));
-    del(0x0A0A0A00, "/24");
-    printf("Mask for IP 10.10.10.1 after 1 delete: %s\n", check(0x0A0A0A01));
-    del(0x0A0A0A00, "/16");
-    printf("Mask for IP 10.10.10.1 after 2 delete: %s\n", check(0x0A0A0A01));
-
+    conduct_tests();
 
     return 0;
 }
 
 
 int add(unsigned int base, char* mask){
-    // Ignore / character
+    // Ignore first character
     int mask_value = atoi(mask + 1);
 
     //validate mask value
@@ -84,7 +60,7 @@ int add(unsigned int base, char* mask){
     Node* current = root;
 
     for (int i = 31; i >= 32 - mask_value; i--) {
-        // printf("mask_value: %d\n", i);
+
         int bit = (base >> i) & 1;
 
         if (current->children[bit] == NULL) {
@@ -103,7 +79,7 @@ int add(unsigned int base, char* mask){
 }
 
 int del(unsigned int base, char* mask){
-    // Ignore / character
+    // Ignore first character
     int mask_value = atoi(mask + 1);
 
     Node* current = root;
@@ -128,9 +104,10 @@ int del(unsigned int base, char* mask){
     // At this point, 'current' points to the node to delete or mark as non-prefix
     current->isPrefix = false;
 
-    // Check if the node has no children, then delete it
+    // Check if the node has no children. If so delete it
     if (current->children[0] == NULL && current->children[1] == NULL){
         free(current);
+
         // Set the parent's pointer to NULL
         parent->children[last_bit] = NULL;
     }
@@ -140,25 +117,24 @@ int del(unsigned int base, char* mask){
 
 
 char* check(unsigned int ip){
-    
 
     // Initialize variables to track the length of the longest prefix match
     int longestMatch = -1;
 
-    // Start traversal from the root node
     Node* current = root;
     for (int i = 31; i >= 0; i--) {
         int bit = (ip >> i) & 1;
 
-        // Move to the next level in the trie
+        // Move to the next level
         if (current->children[bit] != NULL){
             current = current->children[bit];
             if (current->isPrefix == true) {
-                longestMatch = 32 - i; // Update the length of the longest prefix match found so far
+                // Update the length of the longest prefix found
+                longestMatch = 32 - i; 
             }
         }
         else{
-            break; // Exit the loop if there are no further nodes to traverse
+            break;
         }
     }
 
@@ -171,4 +147,102 @@ char* check(unsigned int ip){
     }
 
     return str;
+}
+
+
+void conduct_tests(){
+    // Test adding and checking
+    printf("----- 32.64.128.0/20 -----\n");
+    add(convert_ip("32.64.128.0"), "/20");
+    printf("Mask for IP 32.64.128.0 :  %s\n", check(convert_ip("32.64.128.0")));
+    printf("Mask for IP 32.64.140.10:  %s\n", check(convert_ip("32.64.140.10")));
+    printf("Mask for IP 32.64.143.255: %s\n", check(convert_ip("32.64.143.255")));
+    printf("\n");
+
+    printf("----- 10.20.0.0/16 -----\n");
+    add(convert_ip("10.20.0.0"), "/16");
+    printf("Mask for IP 10.20.0.0:  %s\n", check(convert_ip("10.20.0.0")));
+    printf("Mask for IP 10.20.0.0:  %s\n", check(convert_ip("10.20.100.100")));
+    printf("Mask for IP 10.20.0.0:  %s\n", check(convert_ip("10.20.255.255")));
+    printf("\n");
+
+    printf("----- 10.10.10.10/8 -----\n");
+    add(convert_ip("10.10.10.10"), "/8");
+    printf("Mask for IP 10.11.11.1:      %s\n", check(convert_ip("10.11.11.1")));
+    printf("Mask for IP 255.255.255.255: %s\n", check(convert_ip("255.255.255.255")));
+    printf("\n");
+
+    printf("----- 10.10.10.10/16 -----\n");
+    add(convert_ip("10.10.10.10"), "/16");
+    printf("Mask for IP 10.10.1.1:    %s\n", check(convert_ip("10.10.1.1")));
+    printf("Mask for IP 10.11.10.255: %s\n", check(convert_ip("10.11.10.255")));
+    printf("\n");
+
+    printf("----- 10.10.10.10/24 -----\n");
+    add(convert_ip("10.10.10.10"), "/24");
+    printf("Mask for IP 10.10.10.1:  %s\n", check(convert_ip("10.10.10.1")));
+    printf("Mask for IP 10.10.2.255: %s\n", check(convert_ip("10.10.2.255")));
+    printf("\n");
+
+    printf("----- 10.10.10.10/32 -----\n");
+    add(convert_ip("10.10.10.10"), "/32");
+    printf("Mask for IP 10.10.10.10:  %s\n", check(convert_ip("10.10.10.10")));
+    printf("Mask for IP 10.10.10.255: %s\n", check(convert_ip("10.10.10.255")));
+    printf("\n");
+
+    printf("----- Wrong addresses -----\n");
+    printf("Mask for IP 0.10.2.255:   %s\n", check(convert_ip("0.10.2.255")));
+    printf("Mask for IP 255.10.2.255: %s\n", check(convert_ip("255.10.2.255")));
+    printf("Mask for IP 0.0.0.0:      %s\n", check(convert_ip("0.0.0.0")));
+    printf("\n");
+
+    printf("----- Delete -----\n");
+    printf("Mask for IP 10.10.10.1 before delete:         %s\n", check(convert_ip("10.10.10.1")));
+
+    del(convert_ip("10.10.10.1"), "/24");
+    printf("Mask for IP 10.10.10.1 after delete mask /24: %s\n", check(convert_ip("10.10.10.1")));
+
+    del(convert_ip("10.10.10.1"), "/16");
+    printf("Mask for IP 10.10.10.1 after delete mask /16: %s\n", check(convert_ip("10.10.10.1")));
+
+    del(convert_ip("10.10.10.1"), "/8");
+    printf("Mask for IP 10.10.10.1 after delete mask /8:  %s\n", check(convert_ip("10.10.10.1")));
+}
+
+
+unsigned int convert_ip(char* s){
+    int i = 0;
+
+    int octets[4] = {0};
+    int octets_cnt = 0;
+
+    char octet[4];
+    int octet_cnt = 0;
+
+    while (s[i] != '\0'){
+        if (s[i] == '.'){
+            octet[octet_cnt] = '\0';
+            octet_cnt = 0;
+            octets[octets_cnt++] = atoi(octet);
+
+        }
+        else{
+            octet[octet_cnt++] = s[i];
+        }
+
+        i++;
+    }
+
+    //For last octet
+    octet[octet_cnt] = '\0'; 
+    octets[octets_cnt++] = atoi(octet); 
+
+    int swifts[] = {24, 16, 8, 0};
+    unsigned int result = 0;
+
+    for (int i=0; i < 4; i++){
+        result = (octets[i] << swifts[i]) | result;
+    } 
+
+    return result;
 }
