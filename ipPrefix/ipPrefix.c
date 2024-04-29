@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 
 #define CHILDREN 2
@@ -18,7 +19,7 @@ typedef struct Node
 int add(unsigned int base, char* mask);
 int del(unsigned int base, char* mask);
 char* check(unsigned int ip);
-void conduct_tests();
+void tests();
 unsigned int convert_ip(char* s);
 
 
@@ -39,8 +40,9 @@ int main() {
     for (int i = 0; i < CHILDREN; i++) {
         root->children[i] = NULL;
     }
-
-    conduct_tests();
+    
+    //Conduct tests
+    tests();
 
     return 0;
 }
@@ -48,6 +50,11 @@ int main() {
 
 int add(unsigned int base, char* mask){
     // Ignore first character
+    if (strlen(mask) == 0){
+        printf("Invalid mask value\n");
+        return -1;
+    }
+
     int mask_value = atoi(mask + 1);
 
     //validate mask value
@@ -82,6 +89,8 @@ int del(unsigned int base, char* mask){
     // Ignore first character
     int mask_value = atoi(mask + 1);
 
+    //Set current node for traveling through trie 
+    //Set parent node in case children node will be deleted
     Node* current = root;
     Node* parent = NULL;
     int last_bit;
@@ -117,8 +126,7 @@ int del(unsigned int base, char* mask){
 
 
 char* check(unsigned int ip){
-
-    // Initialize variables to track the length of the longest prefix match
+    // Initialize variable to track the length of the longest prefix
     int longestMatch = -1;
 
     Node* current = root;
@@ -138,8 +146,13 @@ char* check(unsigned int ip){
         }
     }
 
-    char* str = (char*)malloc(5 * sizeof(char));
+    // allocate memory for answer as a string 
+    char* str = (char*)malloc(4 * sizeof(char));
+    
+    // if longestMatch != -1 add '/' to result format
     if (longestMatch != -1){
+
+        // sprintf terminates string with \0 value
         sprintf(str, "/%d", longestMatch);
     }
     else{
@@ -150,41 +163,40 @@ char* check(unsigned int ip){
 }
 
 
-void conduct_tests(){
-    // Test adding and checking
-    printf("----- 32.64.128.0/20 -----\n");
+void tests(){
+    printf("----- add 32.64.128.0/20 -----\n");
     add(convert_ip("32.64.128.0"), "/20");
     printf("Mask for IP 32.64.128.0 :  %s\n", check(convert_ip("32.64.128.0")));
     printf("Mask for IP 32.64.140.10:  %s\n", check(convert_ip("32.64.140.10")));
     printf("Mask for IP 32.64.143.255: %s\n", check(convert_ip("32.64.143.255")));
     printf("\n");
 
-    printf("----- 10.20.0.0/16 -----\n");
+    printf("----- add 10.20.0.0/16 -----\n");
     add(convert_ip("10.20.0.0"), "/16");
-    printf("Mask for IP 10.20.0.0:  %s\n", check(convert_ip("10.20.0.0")));
-    printf("Mask for IP 10.20.0.0:  %s\n", check(convert_ip("10.20.100.100")));
-    printf("Mask for IP 10.20.0.0:  %s\n", check(convert_ip("10.20.255.255")));
+    printf("Mask for IP 10.20.0.0:      %s\n", check(convert_ip("10.20.0.0")));
+    printf("Mask for IP 10.20.100.100:  %s\n", check(convert_ip("10.20.100.100")));
+    printf("Mask for IP 10.20.255.255:  %s\n", check(convert_ip("10.20.255.255")));
     printf("\n");
 
-    printf("----- 10.10.10.10/8 -----\n");
+    printf("----- add 10.10.10.10/8 -----\n");
     add(convert_ip("10.10.10.10"), "/8");
     printf("Mask for IP 10.11.11.1:      %s\n", check(convert_ip("10.11.11.1")));
     printf("Mask for IP 255.255.255.255: %s\n", check(convert_ip("255.255.255.255")));
     printf("\n");
 
-    printf("----- 10.10.10.10/16 -----\n");
-    add(convert_ip("10.10.10.10"), "/16");
-    printf("Mask for IP 10.10.1.1:    %s\n", check(convert_ip("10.10.1.1")));
+    printf("----- add 10.10.10.10/18 -----\n");
+    add(convert_ip("10.10.10.10"), "/18");
+    printf("Mask for IP 10.10.63.254: %s\n", check(convert_ip("10.10.63.254")));
     printf("Mask for IP 10.11.10.255: %s\n", check(convert_ip("10.11.10.255")));
     printf("\n");
 
-    printf("----- 10.10.10.10/24 -----\n");
+    printf("----- add 10.10.10.10/24 -----\n");
     add(convert_ip("10.10.10.10"), "/24");
     printf("Mask for IP 10.10.10.1:  %s\n", check(convert_ip("10.10.10.1")));
     printf("Mask for IP 10.10.2.255: %s\n", check(convert_ip("10.10.2.255")));
     printf("\n");
 
-    printf("----- 10.10.10.10/32 -----\n");
+    printf("----- add 10.10.10.10/32 -----\n");
     add(convert_ip("10.10.10.10"), "/32");
     printf("Mask for IP 10.10.10.10:  %s\n", check(convert_ip("10.10.10.10")));
     printf("Mask for IP 10.10.10.255: %s\n", check(convert_ip("10.10.10.255")));
@@ -202,14 +214,30 @@ void conduct_tests(){
     del(convert_ip("10.10.10.1"), "/24");
     printf("Mask for IP 10.10.10.1 after delete mask /24: %s\n", check(convert_ip("10.10.10.1")));
 
-    del(convert_ip("10.10.10.1"), "/16");
-    printf("Mask for IP 10.10.10.1 after delete mask /16: %s\n", check(convert_ip("10.10.10.1")));
+    del(convert_ip("10.10.10.1"), "/18");
+    printf("Mask for IP 10.10.10.1 after delete mask /18: %s\n", check(convert_ip("10.10.10.1")));
 
     del(convert_ip("10.10.10.1"), "/8");
     printf("Mask for IP 10.10.10.1 after delete mask /8:  %s\n", check(convert_ip("10.10.10.1")));
+
+    printf("\n----- add 10.10.10.10/100 -----\n");
+    add(convert_ip("10.10.10.10"), "/100");
+
+    printf("\n----- add 10.10.10.10 -----\n");
+    add(convert_ip("10.10.10.10"), "");
+
+    printf("\n----- add 1000.10.10.10/10 -----\n");
+    add(convert_ip("1000.10.10.10"), "/10");
+
+    printf("\n----- add 10.10.10/10 -----\n");
+    add(convert_ip("10.10.10"), "/10");
+
+    printf("\n----- add 10.10.10/10 -----\n");
+    add(convert_ip("10.10.10"), "/10");
 }
 
 
+// convert string of ip format to int 
 unsigned int convert_ip(char* s){
     int i = 0;
 
@@ -223,7 +251,14 @@ unsigned int convert_ip(char* s){
         if (s[i] == '.'){
             octet[octet_cnt] = '\0';
             octet_cnt = 0;
-            octets[octets_cnt++] = atoi(octet);
+            int value = atoi(octet);
+
+            //check if octet is correct
+            if (value < 0 || value > 255) {
+                printf("Invalid IP address: %s\n", s);
+                return 0;
+            }
+            octets[octets_cnt++] = value;
 
         }
         else{
@@ -233,9 +268,20 @@ unsigned int convert_ip(char* s){
         i++;
     }
 
-    //For last octet
+    // Check if we have exactly four octets
+    if (octets_cnt != 3) {
+        printf("Invalid IP address: %s\n", s);
+        return 0; 
+    }
+
+    //For the last octet
     octet[octet_cnt] = '\0'; 
-    octets[octets_cnt++] = atoi(octet); 
+    int value = atoi(octet);
+    if (value < 0 || value > 255) {
+        printf("Invalid IP address: %s\n", s);
+        return 0; 
+    }
+    octets[octets_cnt++] = value;
 
     int swifts[] = {24, 16, 8, 0};
     unsigned int result = 0;
